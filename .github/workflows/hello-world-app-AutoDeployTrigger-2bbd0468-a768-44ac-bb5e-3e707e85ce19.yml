@@ -7,7 +7,7 @@ on:
     branches: 
       [ main ]
     paths:
-    - 'Dockerfile/**'
+    - '**'
     - '.github/workflows/hello-world-app-AutoDeployTrigger-2bbd0468-a768-44ac-bb5e-3e707e85ce19.yml'
 
   # Allow mannually trigger 
@@ -36,8 +36,8 @@ jobs:
         with:
           push: true
           tags: acrhelloworldj4urcwnjuloug.azurecr.io/hello-world-app:${{ github.sha }}
-          file: Dockerfile/Dockerfile
-          context: Dockerfile/
+          file: ./Dockerfile
+          context: ./
 
 
   deploy:
