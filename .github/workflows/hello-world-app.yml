@@ -27,13 +27,24 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.HELLOWORLDAPP_AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
+          enable-AzPSSession: true
 
       - name: Deploy to containerapp
         uses: azure/CLI@v1
         with:
           inlineScript: |
             az acr build -t hello-world-app:${{ github.sha }} -r ${{ secrets.HELLOWORLD_ACR_SERVER }} .
+
+      - name: Azure CLI script
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az logout
+            az cache purge
+            az account clear
 
   deploy:
     runs-on: ubuntu-latest
@@ -43,7 +54,10 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.HELLOWORLDAPP_AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
+          enable-AzPSSession: true
 
 
       - name: Deploy to containerapp
@@ -53,3 +67,11 @@ jobs:
             az config set extension.use_dynamic_install=yes_without_prompt
             az containerapp registry set -n hello-world-app -g hello-world-rg --server ${{ secrets.HELLOWORLD_ACR_SERVER }} --identity  ${{ secrets.HELLOWORLDAPP_IDENTITY_ID }}
             az containerapp update -n hello-world-app -g hello-world-rg --image ${{ secrets.HELLOWORLD_ACR_SERVER }}/hello-world-app:${{ github.sha }}
+
+      - name: Azure CLI script
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az logout
+            az cache purge
+            az account clear
