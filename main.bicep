@@ -8,6 +8,7 @@ param appName string = 'hello-world-app'
 param logName string = 'hello-world-log'
 param appIdentityName string = 'hello-world-id'
 param scriptIdentityName string = 'hello-world-script-id'
+param imageTag string = '1.23.1'
 
 // ========== //
 // Variables  //
@@ -34,7 +35,7 @@ resource demoACR 'Microsoft.ContainerRegistry/registries@2019-05-01' = {
     name: 'Basic'
   }
   properties: {
-    adminUserEnabled: true
+    adminUserEnabled: false
   }
 }
 
@@ -55,7 +56,7 @@ resource contributorRole 'Microsoft.Authorization/roleAssignments@2020-08-01-pre
   name: guid(demoACR.name, 'Contributor', scriptIdentity.id)
   scope: demoACR
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')
     principalId: scriptIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -86,10 +87,10 @@ resource importImage 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       }
       {
         name: 'imageName'
-        value: 'docker.io/library/nginx:1.23.1'
+        value: 'docker.io/library/nginx:${imageTag}'
       }
     ]
-    scriptContent: 'az acr import --name $acrName --source $imageName'
+    scriptContent: 'az acr import --name $acrName --source $imageName --force'
   }
 }
 
@@ -172,7 +173,7 @@ resource demoAPP 'Microsoft.App/containerApps@2022-03-01' = {
       containers: [
         {
           name: appName
-          image: '${demoACR.name}.azurecr.io/library/nginx:1.23.1'
+          image: '${demoACR.name}.azurecr.io/library/nginx:${imageTag}'
         }
       ]
     }
