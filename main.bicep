@@ -49,14 +49,43 @@ resource scriptIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-1
 }
 
 // ============== //
+// Create Custom Role for Deployment Script
+// ============== //
+
+var _azImportActions = [
+  'Microsoft.ContainerRegistry/registries/push/write'
+  'Microsoft.ContainerRegistry/registries/pull/read'
+  'Microsoft.ContainerRegistry/registries/read'
+  'Microsoft.ContainerRegistry/registries/importImage/action'
+]
+
+resource roleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
+  name: guid(subscription().id, string(_azImportActions))
+  properties: {
+    roleName: 'Custom Role - AZ IMPORT'
+    description: 'Can import images to registry'
+    type: 'customRole'
+    permissions: [
+      {
+        actions: _azImportActions
+        notActions: []
+      }
+    ]
+    assignableScopes: [
+      resourceGroup().id
+    ]
+  }
+}
+
+// ============== //
 // Assign Role for Deployment Script
 // ============== //
 
-resource contributorRole 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
-  name: guid(demoACR.name, 'Contributor', scriptIdentity.id)
+resource azImportRole 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+  name: guid(demoACR.name, 'azImport', scriptIdentity.id)
   scope: demoACR
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinition.name)
     principalId: scriptIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -140,6 +169,9 @@ resource acrPullRole 'Microsoft.Authorization/roleAssignments@2020-08-01-preview
 // ============== //
 
 resource demoAPP 'Microsoft.App/containerApps@2022-03-01' = {
+  dependsOn: [
+    importImage
+  ]
   name: appName
   location: location
   identity: {
